@@ -48,7 +48,12 @@ def handle_text(message):
             f.close()
 
             # Сообщение о входе
-            bot.send_message(message.from_user.id, f"Выполнен вход под именем {login}")
+            mess = f"Выполнен вход под именем {login}"
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            item_list = types.KeyboardButton('Список товаров👕')
+            cart = types.KeyboardButton('Корзина📋')
+            markup.row(item_list, cart)
+            bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
         except Exception as e:
             bot.send_message(message.from_user.id, f"Неверные данные.")
@@ -72,9 +77,9 @@ def handle_text(message):
             markup.add(add_to_cart, remove_from_cart)
 
             if item['discount_price']:
-                mess = f"<b>{item['title']}</b> - {item['discount_price']}р. Старая цена - {item['price']}р."
+                mess = f"<b>{item['title']}</b> - {item['discount_price']}$. Старая цена - {item['price']}$."
             else:
-                mess = f"<b>{item['title']}</b> - {item['price']}р."
+                mess = f"<b>{item['title']}</b> - {item['price']}$."
             bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
     # Корзина
@@ -89,11 +94,11 @@ def handle_text(message):
 
         # Получение товаров в корзине
         try:
-            mess = 'ITEMS IN YOUT CART:\n'
+            mess = 'ITEMS IN YOUR CART:\n'
             for item in response[0]['items']:
                 mess += f"{response[0]['items'].index(item)+1}. <b>{item['item']}</b> - {item['quantity']}шт.\n"
             mess += f"======================================" \
-                f"\n<b>Order summary:</b> {response[0]['total_order_amount']}"
+                f"\n<b>Order summary:</b> {response[0]['total_order_amount']} $"
         except Exception:
             mess = 'Ваша корзина пуста.'
 

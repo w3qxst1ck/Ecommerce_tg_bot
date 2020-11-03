@@ -121,7 +121,7 @@ def handle_text(message):
         bot.send_message(message.from_user.id, mess, reply_markup=markup_in_cart, parse_mode='html')
 
     if message.text == 'Категории👕👖👟':
-        url = config.url + 'categories/'
+        url = config.url + 'items/categories/'
         response = requests.get(url).json()
         mess = '<b>Categories:</b>\n\n'
         for c in response:
@@ -134,26 +134,24 @@ def handle_text(message):
         markup.row(item_list, cart, categories)
         bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
+    # Категории
     if message.text[:9] == 'категория' or message.text[:9] == 'Категория':
         # Получение товаров одной категории
         try:
             category_id = message.text[-1]
-            url = config.url + f"categories/{category_id}/"
+            url = config.url + f"items/categories/{category_id}/"
             response = requests.get(url).json()
             mess = f"<b>Items in category \"{response['title']}\":</b>\n\n"
-        except Exception:
-            mess = f"<b>Wrong category number! Choose one from category list.</b>\n"
 
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        item_list = types.KeyboardButton('Список товаров👕')
-        cart = types.KeyboardButton('Корзина📋')
-        categories = types.KeyboardButton('Категории👕👖👟')
-        markup.row(item_list, cart, categories)
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            item_list = types.KeyboardButton('Список товаров👕')
+            cart = types.KeyboardButton('Корзина📋')
+            categories = types.KeyboardButton('Категории👕👖👟')
+            markup.row(item_list, cart, categories)
 
-        bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+            bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
-        # Отправка товаров для заказа
-        try:
+            # Отправка товаров для заказа
             for item in response['category_items']:
                 # Клавиатура для заказа товаров
                 markup = types.InlineKeyboardMarkup(row_width=2)
@@ -167,7 +165,8 @@ def handle_text(message):
                     mess = f"<b>{item['title']}</b> - {item['price']}$.\n"
                 bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
         except Exception:
-            pass
+            mess = f"<b>Wrong category number! Choose one from category list.</b>\n"
+            bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
 
 @bot.callback_query_handler(func=lambda call: True)

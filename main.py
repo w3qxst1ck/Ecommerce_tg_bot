@@ -21,22 +21,23 @@ def create_buttons():
 
 @bot.message_handler(commands=['start'])
 def handle_text(message):
+    """ Hello message and create bottom buttons
+    """
     bot.send_message(message.from_user.id, 'Hi! You are in ecommerce website.', reply_markup=create_buttons())
 
 
 @bot.message_handler(commands=['login'])
 def handle_text(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item_list = types.KeyboardButton('Список товаров👕')
-    cart = types.KeyboardButton('Корзина📋')
-    categories = types.KeyboardButton('Категории👕👖👟')
-    markup.row(item_list, cart, categories)
+    """ Instruction for authorization
+    """
     mess = '<b>Для авторизации вам необходимо отправить данные в следущей форме:</b>\nlogin:\nusername\npassword'
-    bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+    bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
 
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
+    """ Handling text messages (login, Список товаров👕, Корзина📋, Категории👕👖👟, Категория id)
+    """
     # Авторизация
     if message.text[:6] == 'login:':
         try:
@@ -57,12 +58,7 @@ def handle_text(message):
 
             # Сообщение о входе
             mess = f"Выполнен вход под именем {login}"
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            item_list = types.KeyboardButton('Список товаров👕')
-            cart = types.KeyboardButton('Корзина📋')
-            categories = types.KeyboardButton('Категории👕👖👟')
-            markup.row(item_list, cart, categories)
-            bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+            bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
         except Exception as e:
             bot.send_message(message.from_user.id, f"Неверные данные.")
@@ -112,14 +108,9 @@ def handle_text(message):
         except Exception:
             mess = 'Ваша корзина пуста.'
 
-        markup_in_cart = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        item_list = types.KeyboardButton('Список товаров👕')
-        cart = types.KeyboardButton('Корзина📋')
-        categories = types.KeyboardButton('Категории👕👖👟')
-        markup_in_cart.row(item_list, cart, categories)
+        bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
-        bot.send_message(message.from_user.id, mess, reply_markup=markup_in_cart, parse_mode='html')
-
+    # Категории
     if message.text == 'Категории👕👖👟':
         url = config.url + 'items/categories/'
         response = requests.get(url).json()
@@ -127,14 +118,17 @@ def handle_text(message):
         for c in response:
             mess += f"{c['id']}. {c['title']} ({c['items_count']} items)\n"
 
+        cat_1 = types.KeyboardButton('Категория 1')
+        cat_2 = types.KeyboardButton('Категория 2')
+        cat_3 = types.KeyboardButton('Категория 3')
+        cat_4 = types.KeyboardButton('Категория 4')
+        cat_5 = types.KeyboardButton('Категория 5')
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        item_list = types.KeyboardButton('Список товаров👕')
-        cart = types.KeyboardButton('Корзина📋')
-        categories = types.KeyboardButton('Категории👕👖👟')
-        markup.row(item_list, cart, categories)
+        markup.add(cat_1, cat_2, cat_3, cat_4, cat_5)
+
         bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
-    # Категории
+    # Вывод одной категории
     if message.text[:9] == 'категория' or message.text[:9] == 'Категория':
         # Получение товаров одной категории
         try:
@@ -143,13 +137,7 @@ def handle_text(message):
             response = requests.get(url).json()
             mess = f"<b>Items in category \"{response['title']}\":</b>\n\n"
 
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            item_list = types.KeyboardButton('Список товаров👕')
-            cart = types.KeyboardButton('Корзина📋')
-            categories = types.KeyboardButton('Категории👕👖👟')
-            markup.row(item_list, cart, categories)
-
-            bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+            bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
             # Отправка товаров для заказа
             for item in response['category_items']:
@@ -171,7 +159,10 @@ def handle_text(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
+    """ Handling messages from inline keyboard (add to cart, delete from cart)
+    """
     if call.message:
+
         # Добавление в корзину
         if call.data[:3] == 'add':
             url = config.url + f"cart/{call.data[4:]}/"
@@ -182,6 +173,7 @@ def callback_inline(call):
 
             response = requests.post(url, headers={'Authorization': f'Token {auth_token}'})
             bot.send_message(call.message.chat.id, 'Item has been added to the cart ✅')
+
         # Удаление из корзины
         if call.data[:3] == 'del':
             url = config.url + f"cart/remove/{call.data[4:]}/"

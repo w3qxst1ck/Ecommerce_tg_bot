@@ -71,7 +71,7 @@ def handle_text(message):
 
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
-    """ Handling text messages (login, Список товаров👕, Корзина📋, Категории👕👖👟, Категория id)
+    """ Handling text messages (login, Список товаров👕, Корзина📋, Категории👕👖👟, Категория id, sale items)
     """
     # Авторизация
     if message.text[:6] == 'login:':
@@ -144,8 +144,9 @@ def handle_text(message):
         cat_3 = types.KeyboardButton('Категория 3')
         cat_4 = types.KeyboardButton('Категория 4')
         cat_5 = types.KeyboardButton('Категория 5')
+        sale_items = types.KeyboardButton('Скидка🔥')
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(cat_1, cat_2, cat_3, cat_4, cat_5)
+        markup.add(cat_1, cat_2, cat_3, cat_4, cat_5, sale_items)
 
         bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
 
@@ -164,6 +165,14 @@ def handle_text(message):
         except Exception:
             mess = f"<b>Wrong category number! Choose one from category list.</b>\n"
             bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
+
+    # Товары со скидкой
+    if message.text == 'Скидка🔥':
+        url = config.url + 'items/?discount_price=false'
+        response = requests.get(url).json()
+        mess = 'SALE ITEMS🔥\n\n'
+        bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
+        get_item_list(message, response)
 
     # Поиск по товарам
     if message.text == 'Поиск🔎':

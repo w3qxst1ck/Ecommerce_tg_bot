@@ -1,3 +1,5 @@
+import urllib
+
 import telebot
 import requests
 from telebot import types
@@ -9,7 +11,7 @@ bot = telebot.TeleBot(config.token)
 
 
 def create_buttons():
-    """ Create "Список товаров👕", "Корзина📋", "Категории👕👖👟" buttons on the panel
+    """ Create "Список товаров👕", "Корзина📋", "Категории👕👖👟", "Поиск🔎" buttons on the panel
     """
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     item_list = types.KeyboardButton('Список товаров👕')
@@ -34,11 +36,21 @@ def get_item_list(message, response):
     """ Get item list (all and by categories)
     """
     for item in response:
+        # Текст для описания товара под фото
         if item['discount_price']:
             mess = f"<b>{item['title']}</b> - {item['discount_price']}$. Old price - {item['price']}$."
         else:
             mess = f"<b>{item['title']}</b> - {item['price']}$."
-        bot.send_message(message.from_user.id, mess, reply_markup=create_inline_button(item), parse_mode='html')
+
+        # Отправка фото c описанием под ним
+        url = item['image']
+        f = open('out.jpg', 'wb')
+        f.write(urllib.request.urlopen(url).read())
+        f.close()
+
+        img = open('out.jpg', 'rb')
+        bot.send_photo(message.from_user.id, img, caption=mess, parse_mode='html',
+                       reply_markup=create_inline_button(item))
 
 
 @bot.message_handler(commands=['start'])

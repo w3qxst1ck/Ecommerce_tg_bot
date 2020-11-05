@@ -45,11 +45,11 @@ def get_item_list(message, response):
 
         # Отправка фото c описанием под ним
         url = item['image']
-        f = open('out.jpg', 'wb')
+        f = open('files/out.jpg', 'wb')
         f.write(urllib.request.urlopen(url).read())
         f.close()
 
-        img = open('out.jpg', 'rb')
+        img = open('files/out.jpg', 'rb')
         bot.send_photo(message.from_user.id, img, caption=mess, parse_mode='html',
                        reply_markup=create_inline_button(item))
 
@@ -58,6 +58,8 @@ def get_item_list(message, response):
 def handle_text(message):
     """ Hello message and create bottom buttons
     """
+    sti = open('files/stickers/hello.tgs', 'rb')
+    bot.send_sticker(message.from_user.id, sti)
     bot.send_message(message.from_user.id, 'Hi! You are in ecommerce website.', reply_markup=create_buttons())
 
 
@@ -87,11 +89,13 @@ def handle_text(message):
             auth_token = response['auth_token']
 
             # Запись токена в файл
-            f = open(f'auth_token.txt', 'w')
+            f = open(f'files/auth_token.txt', 'w')
             f.write(auth_token)
             f.close()
 
             # Сообщение о входе
+            sti = open('files/stickers/login.tgs', 'rb')
+            bot.send_sticker(message.from_user.id, sti)
             mess = f"Выполнен вход под именем {login}"
             bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
@@ -114,7 +118,7 @@ def handle_text(message):
         url = config.url + 'cart/'
 
         # Получение токена из файла
-        file = open('auth_token.txt')
+        file = open('files/auth_token.txt')
         auth_token = file.read()
 
         response = requests.get(url, headers={'Authorization': f'Token {auth_token}'}).json()
@@ -202,10 +206,12 @@ def callback_inline(call):
             url = config.url + f"cart/{call.data[4:]}/"
 
             # Получение токена из файла
-            file = open('auth_token.txt')
+            file = open('files/auth_token.txt')
             auth_token = file.read()
 
             response = requests.post(url, headers={'Authorization': f'Token {auth_token}'})
+            sti = open('files/stickers/add.tgs', 'rb')
+            bot.send_sticker(call.message.chat.id, sti)
             bot.send_message(call.message.chat.id, 'Item has been added to the cart ✅')
 
         # Удаление из корзины
@@ -213,7 +219,7 @@ def callback_inline(call):
             url = config.url + f"cart/remove/{call.data[4:]}/"
 
             # Получение токена из файла
-            file = open('auth_token.txt')
+            file = open('files/auth_token.txt')
             auth_token = file.read()
 
             response = requests.delete(url, headers={'Authorization': f'Token {auth_token}'})

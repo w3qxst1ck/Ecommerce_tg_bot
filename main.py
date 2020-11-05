@@ -19,6 +19,28 @@ def create_buttons():
     return markup
 
 
+def create_inline_button(item):
+    """ Create inline button under the message (add to cart, delete from cart)
+    """
+    # Клавиатура для добавления и удаления из корзины
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    add_to_cart = types.InlineKeyboardButton('В корзину ✔', callback_data=f"add_{item['id']}")
+    remove_from_cart = types.InlineKeyboardButton('Убрать из корзины ❌', callback_data=f"del_{item['id']}")
+    markup.add(add_to_cart, remove_from_cart)
+    return markup
+
+
+def get_item_list(message, response):
+    """ Get item list (all and by categories)
+    """
+    for item in response:
+        if item['discount_price']:
+            mess = f"<b>{item['title']}</b> - {item['discount_price']}$. Old price - {item['price']}$."
+        else:
+            mess = f"<b>{item['title']}</b> - {item['price']}$."
+        bot.send_message(message.from_user.id, mess, reply_markup=create_inline_button(item), parse_mode='html')
+
+
 @bot.message_handler(commands=['start'])
 def handle_text(message):
     """ Hello message and create bottom buttons
@@ -66,27 +88,13 @@ def handle_text(message):
     # Вывод списка товаров
     if message.text == 'Список товаров👕':
         start_message = '<u>You can choose these products:\n</u>'
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        cart = types.KeyboardButton('Корзина📋')
-        categories = types.KeyboardButton('Категории👕👖👟')
-        markup.row(cart, categories)
-        bot.send_message(message.from_user.id, start_message, reply_markup=markup, parse_mode='html')
+
+        bot.send_message(message.from_user.id, start_message, reply_markup=create_buttons(), parse_mode='html')
 
         # Список товаров
         url = config.url + 'items/'
         response = requests.get(url).json()
-        for item in response:
-            # Клавиатура для заказа товаров
-            markup = types.InlineKeyboardMarkup(row_width=2)
-            add_to_cart = types.InlineKeyboardButton('В корзину ✔', callback_data=f"add_{item['id']}")
-            remove_from_cart = types.InlineKeyboardButton('Убрать из корзины ❌', callback_data=f"del_{item['id']}")
-            markup.add(add_to_cart, remove_from_cart)
-
-            if item['discount_price']:
-                mess = f"<b>{item['title']}</b> - {item['discount_price']}$. Old price - {item['price']}$."
-            else:
-                mess = f"<b>{item['title']}</b> - {item['price']}$."
-            bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+        get_item_list(message, response)
 
     # Корзина
     if message.text == 'Корзина📋':
@@ -135,23 +143,11 @@ def handle_text(message):
             category_id = message.text[-1]
             url = config.url + f"items/categories/{category_id}/"
             response = requests.get(url).json()
-            mess = f"<b>Items in category \"{response['title']}\":</b>\n\n"
 
+            mess = f"<b>Items in category \"{response['title']}\":</b>\n\n"
             bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
-            # Отправка товаров для заказа
-            for item in response['category_items']:
-                # Клавиатура для заказа товаров
-                markup = types.InlineKeyboardMarkup(row_width=2)
-                add_to_cart = types.InlineKeyboardButton('В корзину ✔', callback_data=f"add_{item['id']}")
-                remove_from_cart = types.InlineKeyboardButton('Убрать из корзины ❌', callback_data=f"del_{item['id']}")
-                markup.add(add_to_cart, remove_from_cart)
-
-                if item['discount_price']:
-                    mess = f"<b>{item['title']}</b> - {item['discount_price']}$. Old price - {item['price']}$.\n"
-                else:
-                    mess = f"<b>{item['title']}</b> - {item['price']}$.\n"
-                bot.send_message(message.from_user.id, mess, reply_markup=markup, parse_mode='html')
+            get_item_list(message, response['category_items'])
         except Exception:
             mess = f"<b>Wrong category number! Choose one from category list.</b>\n"
             bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')

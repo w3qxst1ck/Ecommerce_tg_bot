@@ -17,7 +17,8 @@ def create_buttons():
     item_list = types.KeyboardButton('Список товаров👕')
     cart = types.KeyboardButton('Корзина📋')
     categories = types.KeyboardButton('Категории👕👖👟')
-    markup.row(item_list, cart, categories)
+    search = types.KeyboardButton('Поиск🔎')
+    markup.row(categories, item_list, cart, search)
     return markup
 
 
@@ -162,6 +163,22 @@ def handle_text(message):
             get_item_list(message, response['category_items'])
         except Exception:
             mess = f"<b>Wrong category number! Choose one from category list.</b>\n"
+            bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
+
+    # Поиск по товарам
+    if message.text == 'Поиск🔎':
+        mess = '<b>Отправте текст поска в следущей форме:</b>\n' \
+               'Поиск: <i>&lt;название товара/ категории/ описание&gt"</i>'
+        bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
+
+    if message.text[:7] == 'Поиск: ':
+        search_param = message.text[7:]
+        url = config.url + f"items/?search={search_param}"
+        response = requests.get(url).json()
+        if response:
+            get_item_list(message, response)
+        else:
+            mess = 'По вашему запросу ничего не найдено.'
             bot.send_message(message.from_user.id, mess, reply_markup=create_buttons(), parse_mode='html')
 
 
